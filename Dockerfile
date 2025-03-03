@@ -5,7 +5,8 @@ FROM openjdk:17-jdk-slim
 WORKDIR /app
 
 # Copy the JAR file into the container
-COPY app.jar app.jar
+COPY target/app.jar app.jar
+
 
 # Run the Java application
 CMD ["java", "-jar", "app.jar"]
