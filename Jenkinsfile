@@ -13,7 +13,9 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                git branch: 'main', url: 'git@github.com:ranadesh/traildocker.git'
+                git branch: 'main',
+                    credentialsId: '593f4eae-4d70-48d9-b1ef-83db8802b8f7',
+                    url: 'git@github.com:ranadesh/traildocker.git'
             }
         }
 
