@@ -2,16 +2,28 @@ pipeline {
     agent any
 
     environment {
-        AWS_REGION = 'your-region'  // e.g., us-east-1
-        AWS_ACCOUNT_ID = 'your-account-id'
-        REPO_NAME = 'your-ecr-repository'
+        AWS_REGION = 'ap-south-1'
+        AWS_ACCOUNT_ID = '982081069151'
+        REPO_NAME = 'my-java-app'
         IMAGE_TAG = "latest"
+        AWS_ACCESS_KEY_ID = credentials('AWS_ACCESS_KEY_ID')
+        AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                git branch: 'main', url: 'git@github.com:your-username/your-repo.git'
+                git branch: 'main', url: 'git@github.com:ranadesh/traildocker.git'
+            }
+        }
+
+        stage('Configure AWS CLI') {
+            steps {
+                sh '''
+                aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+                aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+                aws configure set region $AWS_REGION
+                '''
             }
         }
 
@@ -29,7 +41,10 @@ pipeline {
 
         stage('Login to AWS ECR') {
             steps {
-                sh 'aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com'
+                sh '''
+                aws ecr get-login-password --region $AWS_REGION | \
+                docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+                '''
             }
         }
 
@@ -46,4 +61,5 @@ pipeline {
         }
     }
 }
+
 
