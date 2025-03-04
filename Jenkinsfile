@@ -32,54 +32,50 @@ pipeline {
         }
 
         stage('Login to AWS ECR') {
-    steps {
-        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'AWS_ACCESS_KEY_ID']]) {
-    sh 'aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 982081069151.dkr.ecr.ap-south-1.amazonaws.com'
-        }
-         {    
-            script {
-                def awsRegion = "ap-south-1"
-                def awsAccountId = "982081069151"
-                def ecrRepository = "my-java-app"  // Replace with your ECR repository name
-                def ecrUrl = "${awsAccountId}.dkr.ecr.${awsRegion}.amazonaws.com/${ecrRepository}"
-
-
-                sh """
-                AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}"
-                AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}"
-                export AWS_REGION=${awsRegion}
-                export AWS_ACCOUNT_ID=${awsAccountId}
-
-                # Validate AWS CLI authentication
-                aws sts get-caller-identity || exit 1
-
-                # Login to AWS ECR
-                aws ecr get-login-password --region ${awsRegion} | \
-                docker login --username AWS --password-stdin ${awsAccountId}.dkr.ecr.${awsRegion}.amazonaws.com
-
-                echo "Successfully logged in to AWS ECR: ${ecrUrl}"
-                """
+            steps {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'AWS_ACCESS_KEY_ID']]) {
+                    sh '''
+                    aws ecr get-login-password --region $AWS_REGION | \
+                    docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+                    '''
+                }
                 
-                // Store ECR URL in an environment variable for later use
-                env.ECR_URL = ecrUrl
+                script {
+                    def awsRegion = "ap-south-1"
+                    def awsAccountId = "982081069151"
+                    def ecrRepository = "my-java-app"
+                    def ecrUrl = "${awsAccountId}.dkr.ecr.${awsRegion}.amazonaws.com/${ecrRepository}"
+                    
+                    sh '''
+                    export AWS_REGION=${awsRegion}
+                    export AWS_ACCOUNT_ID=${awsAccountId}
+                    
+                    # Validate AWS CLI authentication
+                    aws sts get-caller-identity || exit 1
+                    
+                    echo "Successfully logged in to AWS ECR: ${ecrUrl}"
+                    '''
+                    
+                    // Store ECR URL in an environment variable for later use
+                    env.ECR_URL = ecrUrl
+                }
             }
         }
-    }
-}
 
         stage('Push Image to ECR') {
             steps {
-                sh 'docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO_NAME:$IMAGE_TAG'
+                sh '''
+                docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO_NAME:$IMAGE_TAG
+                '''
             }
         }
 
         stage('Cleanup Docker') {
             steps {
-                sh 'docker rmi $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO_NAME:$IMAGE_TAG || true'
+                sh '''
+                docker rmi $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO_NAME:$IMAGE_TAG || true
+                '''
             }
         }
     }
 }
-
-
-
