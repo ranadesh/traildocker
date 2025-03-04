@@ -6,8 +6,6 @@ pipeline {
         AWS_ACCOUNT_ID = '982081069151'
         REPO_NAME = 'my-java-app'
         IMAGE_TAG = "latest"
-        AWS_ACCESS_KEY_ID = credentials('AWS_ACCESS_KEY_ID')
-        AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
     }
 
     stages {
@@ -19,34 +17,50 @@ pipeline {
             }
         }
 
-        stage('Configure AWS CLI') {
+        stage('Configure AWS Credentials') {
             steps {
-                sh '''
-                aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-                aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-                aws configure set region $AWS_REGION
-                '''
+                withAWS(credentials: 'AWS_CREDENTIALS_ID', region: "$AWS_REGION") {
+                    sh 'aws sts get-caller-identity'
+                }
             }
         }
 
         stage('Compile Java Code') {
             steps {
-                sh 'javac src/main/java/com/example/App.java -d target/'
+                sh 'mvn clean package -DskipTests' // Using Maven instead of manual compilation
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO_NAME:$IMAGE_TAG .'
+                sh '''
+                docker build -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO_NAME:$IMAGE_TAG .
+                '''
             }
         }
 
         stage('Login to AWS ECR') {
             steps {
-                sh '''
-                aws ecr get-login-password --region $AWS_REGION | \
-                docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-                '''
+                withCredentials([
+                    string(credentialsId: 'aws-access-key', variable: 'AWS_ACCESS_KEY_ID'),
+                    string(credentialsId: 'aws-secret-key', variable: 'AWS_SECRET_ACCESS_KEY')
+                ]) {
+                    script {
+                        sh """
+                        export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+                        export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+                        export AWS_REGION=ap-south-1
+                        export AWS_ACCOUNT_ID=982081069151
+
+                        # Validate AWS CLI authentication
+                        aws sts get-caller-identity || exit 1
+
+                        # Login to AWS ECR
+                        aws ecr get-login-password --region $AWS_REGION | \
+                        docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+                        """
+                    }
+                }
             }
         }
 
@@ -63,5 +77,6 @@ pipeline {
         }
     }
 }
+
 
 
