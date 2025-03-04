@@ -17,14 +17,6 @@ pipeline {
             }
         }
 
-        stage('Configure AWS Credentials') {
-            steps {
-                withAWS(credentials: 'AWS_CREDENTIALS_ID', region: "$AWS_REGION") {
-                    sh 'aws sts get-caller-identity'
-                }
-            }
-        }
-
         stage('Compile Java Code') {
             steps {
                 sh 'mvn clean package -DskipTests' // Using Maven instead of manual compilation
