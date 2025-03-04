@@ -33,9 +33,10 @@ pipeline {
 
         stage('Login to AWS ECR') {
     steps {
-        withCredentials([
-            usernamePassword(credentialsId: 'AWS_ACCESS_KEY_ID', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')
-        ]) {
+        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'AWS_ACCESS_KEY_ID']]) {
+    sh 'aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 982081069151.dkr.ecr.ap-south-1.amazonaws.com'
+        }
+         {    
             script {
                 def awsRegion = "ap-south-1"
                 def awsAccountId = "982081069151"
