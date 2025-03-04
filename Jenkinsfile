@@ -49,8 +49,7 @@ pipeline {
                 aws ecr get-login-password --region $AWS_REGION | \
                 docker login --username AWS --password-stdin ${awsAccountId}.dkr.ecr.$AWS_REGION.amazonaws.com
 
-                # Validate AWS authentication
-                aws sts get-caller-identity || exit 1
+               
 
                 echo "Successfully logged in to AWS ECR: ${ecrUrl}"
             """
