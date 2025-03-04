@@ -34,18 +34,18 @@ pipeline {
         stage('Login to AWS ECR') {
     steps {
         withCredentials([
-            string(credentialsId: 'AWS_ACCESS_KEY_ID', variable: 'AWS_ACCESS_KEY_ID'),
-            string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 'AWS_SECRET_ACCESS_KEY')
+            usernamePassword(credentialsId: 'AWS_ACCESS_KEY_ID', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')
         ]) {
             script {
                 def awsRegion = "ap-south-1"
                 def awsAccountId = "982081069151"
                 def ecrRepository = "my-java-app"  // Replace with your ECR repository name
-                def ecrUrl = "${982081069151}.dkr.ecr.${ap-south-1}.amazonaws.com/${my-java-app}"
+                def ecrUrl = "${awsAccountId}.dkr.ecr.${awsRegion}.amazonaws.com/${ecrRepository}"
+
 
                 sh """
-                export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-                export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+                AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}"
+                AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}"
                 export AWS_REGION=${awsRegion}
                 export AWS_ACCOUNT_ID=${awsAccountId}
 
