@@ -40,8 +40,8 @@ pipeline {
             script {
                 def awsRegion = "ap-south-1"
                 def awsAccountId = "982081069151"
-                def ecrRepository = "my-repo"  // Replace with your ECR repository name
-                def ecrUrl = "${awsAccountId}.dkr.ecr.${awsRegion}.amazonaws.com/${ecrRepository}"
+                def ecrRepository = "my-java-app"  // Replace with your ECR repository name
+                def ecrUrl = "${982081069151}.dkr.ecr.${ap-south-1}.amazonaws.com/${my-java-app}"
 
                 sh """
                 export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
